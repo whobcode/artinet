@@ -6,11 +6,27 @@ import { stripIndents } from '~/utils/stripIndent';
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-export async function action(args: ActionFunctionArgs) {
+/**
+ * The entry point for refining a user's primitive scrawlings into a prompt
+ * worthy of an advanced AI. This is where intellectual alchemy happens.
+ * Note: A good prompt is the difference between a masterpiece and a mess.
+ *
+ * @param {ActionFunctionArgs} args - The Remix action arguments, bearing the user's initial message.
+ * @returns {Promise<Response>} A streaming response containing the AI-improved prompt.
+ */
+export async function action(args: ActionFunctionArgs): Promise<Response> {
   return enhancerAction(args);
 }
 
-async function enhancerAction({ context, request }: ActionFunctionArgs) {
+/**
+ * Takes a user's message, wraps it in a meta-prompt, and sends it to the AI
+ * with a simple, forceful instruction: "Make this better." It then transforms
+ * the AI's streaming response to deliver only the pure, enhanced text.
+ *
+ * @param {ActionFunctionArgs} { context, request } - The Remix action arguments.
+ * @returns {Promise<Response>} A promise resolving to a StreamingTextResponse of the improved prompt.
+ */
+async function enhancerAction({ context, request }: ActionFunctionArgs): Promise<Response> {
   const { message } = await request.json<{ message: string }>();
 
   try {

@@ -1,16 +1,30 @@
-// @ts-nocheck
-// Preventing TS checks with files presented in the video for a better presentation.
 import { type ActionFunctionArgs } from '@remix-run/cloudflare';
 import { MAX_RESPONSE_SEGMENTS, MAX_TOKENS } from '~/lib/.server/llm/constants';
 import { CONTINUE_PROMPT } from '~/lib/.server/llm/prompts';
 import { streamText, type Messages, type StreamingOptions } from '~/lib/.server/llm/stream-text';
 import SwitchableStream from '~/lib/.server/llm/switchable-stream';
 
-export async function action(args: ActionFunctionArgs) {
+/**
+ * The grand gateway for all AI chat interactions. This Remix action handler
+ * receives user prompts and orchestrates the glorious, streaming response from the AI.
+ * As ivelLevi decrees, all roads to AI power must pass through here.
+ *
+ * @param {ActionFunctionArgs} args - The arguments provided by the Remix framework, containing the request and context.
+ * @returns {Promise<Response>} A streaming response containing the AI's wisdom, or a tragic error.
+ */
+export async function action(args: ActionFunctionArgs): Promise<Response> {
   return chatAction(args);
 }
 
-async function chatAction({ context, request }: ActionFunctionArgs) {
+/**
+ * The core engine of the chat functionality. It takes the user's message history,
+ * initiates a stream with the configured AI model, and handles the messy details
+ * of response continuation if the model gets too verbose.
+ *
+ * @param {ActionFunctionArgs} { context, request } - The Remix action arguments.
+ * @returns {Promise<Response>} A promise that resolves to a streaming response object.
+ */
+async function chatAction({ context, request }: ActionFunctionArgs): Promise<Response> {
   const { messages } = await request.json<{ messages: Messages }>();
 
   const stream = new SwitchableStream();

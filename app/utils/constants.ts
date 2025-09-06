@@ -1,12 +1,27 @@
 import type { ModelInfo, OllamaApiResponse, OllamaModel } from './types';
 
+/** The name of the working directory inside the WebContainer. */
 export const WORK_DIR_NAME = 'project';
+
+/** The absolute path to the working directory. */
 export const WORK_DIR = `/home/${WORK_DIR_NAME}`;
+
+/** The XML tag name used to wrap file modifications in prompts. */
 export const MODIFICATIONS_TAG_NAME = 'bolt_file_modifications';
+
+/** A regex to extract the model name from a prompt, e.g., `[Model: model-name]`. */
 export const MODEL_REGEX = /^\[Model: (.*?)\]\n\n/;
+
+/** The default AI model to use if none is specified. */
 export const DEFAULT_MODEL = 'claude-3-5-sonnet-20240620';
+
+/** The default AI provider to use if none is specified. */
 export const DEFAULT_PROVIDER = 'Anthropic';
 
+/**
+ * A static list of well-known AI models.
+ * This list is combined with dynamically fetched models from local services.
+ */
 const staticModels: ModelInfo[] = [
   { name: 'claude-3-5-sonnet-20240620', label: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
   { name: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI' },
@@ -47,30 +62,37 @@ const staticModels: ModelInfo[] = [
   { name: 'mistral-large-latest', label: 'Mistral Large Latest', provider: 'Mistral' },
 ];
 
+/**
+ * The master list of available AI models.
+ * It is initialized with the static list and then dynamically populated
+ * with models from local services like Ollama.
+ */
 export let MODEL_LIST: ModelInfo[] = [...staticModels];
 
-const getOllamaBaseUrl = () => {
+/**
+ * Determines the correct base URL for Ollama, accounting for Docker environments.
+ * @returns {string} The base URL for the Ollama API.
+ */
+const getOllamaBaseUrl = (): string => {
   const defaultBaseUrl = import.meta.env.OLLAMA_API_BASE_URL || 'http://localhost:11434';
-  // Check if we're in the browser
   if (typeof window !== 'undefined') {
-    // Frontend always uses localhost
     return defaultBaseUrl;
   }
-  
-  // Backend: Check if we're running in Docker
   const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
-  
-  return isDocker 
+  return isDocker
     ? defaultBaseUrl.replace("localhost", "host.docker.internal")
     : defaultBaseUrl;
 };
 
+/**
+ * Fetches the list of available models from a local Ollama server.
+ * @returns {Promise<ModelInfo[]>} A promise that resolves to a list of Ollama models.
+ */
 async function getOllamaModels(): Promise<ModelInfo[]> {
   try {
     const base_url = getOllamaBaseUrl();
     const response = await fetch(`${base_url}/api/tags`);
     const data = await response.json() as OllamaApiResponse;
-
     return data.models.map((model: OllamaModel) => ({
       name: model.name,
       label: `${model.name} (${model.details.parameter_size})`,
@@ -81,6 +103,10 @@ async function getOllamaModels(): Promise<ModelInfo[]> {
   }
 }
 
+/**
+ * Fetches the list of available models from an OpenAI-compatible API.
+ * @returns {Promise<ModelInfo[]>} A promise that resolves to a list of available models.
+ */
 async function getOpenAILikeModels(): Promise<ModelInfo[]> {
  try {
    const base_url =import.meta.env.OPENAI_LIKE_API_BASE_URL || "";
@@ -99,15 +125,23 @@ async function getOpenAILikeModels(): Promise<ModelInfo[]> {
       label: model.id,
       provider: 'OpenAILike',
     }));
- }catch (e) {
+ } catch (e) {
    return []
  }
-
 }
+
+/**
+ * Initializes the master model list by fetching dynamic models and combining
+ * them with the static list. This function is called once on application startup.
+ * @returns {Promise<void>}
+ */
 async function initializeModelList(): Promise<void> {
   const ollamaModels = await getOllamaModels();
   const openAiLikeModels = await getOpenAILikeModels();
   MODEL_LIST = [...ollamaModels,...openAiLikeModels, ...staticModels];
 }
-initializeModelList().then();
+
+// Fire and forget the initialization.
+initializeModelList();
+
 export { getOllamaModels, getOpenAILikeModels, initializeModelList };
