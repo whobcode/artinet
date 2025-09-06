@@ -1,30 +1,27 @@
-// @ts-nocheck
-// Preventing TS checks with files presented in the video for a better presentation.
-import { streamText as _streamText, convertToCoreMessages } from 'ai';
+import { streamText as _streamText, convertToCoreMessages, CoreMessage } from 'ai';
 import { getModel } from '~/lib/.server/llm/model';
 import { MAX_TOKENS } from './constants';
 import { getSystemPrompt } from './prompts';
 import { MODEL_LIST, DEFAULT_MODEL, DEFAULT_PROVIDER } from '~/utils/constants';
 
-interface ToolResult<Name extends string, Args, Result> {
-  toolCallId: string;
-  toolName: Name;
-  args: Args;
-  result: Result;
-}
+// This file is the central point for interacting with the Vercel AI SDK.
+// It prepares messages, selects the appropriate model, and initiates the stream.
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  toolInvocations?: ToolResult<string, unknown, unknown>[];
-  model?: string;
-}
+export type Messages = CoreMessage[];
+export type StreamingOptions = Omit<Parameters<typeof _streamText>[0], 'model' | 'messages' | 'system'>;
 
-export type Messages = Message[];
-
-export type StreamingOptions = Omit<Parameters<typeof _streamText>[0], 'model'>;
-
-function extractModelFromMessage(message: Message): { model: string; content: string } {
+/**
+ * Extracts a model identifier from the user's message content.
+ * Allows users to specify a model with the syntax `[Model: model-name]`.
+ * If no model is specified, it wisely defaults to the pre-configured default.
+ *
+ * @param {CoreMessage} message - The user's message object.
+ * @returns {{model: string, content: string}} An object containing the identified model and the cleaned message content.
+ */
+function extractModelFromMessage(message: CoreMessage): { model: string; content: string } {
+  if (typeof message.content !== 'string') {
+    return { model: DEFAULT_MODEL, content: '' };
+  }
   const modelRegex = /^\[Model: (.*?)\]\n\n/;
   const match = message.content.match(modelRegex);
 
@@ -34,10 +31,19 @@ function extractModelFromMessage(message: Message): { model: string; content: st
     return { model, content };
   }
 
-  // Default model if not specified
   return { model: DEFAULT_MODEL, content: message.content };
 }
 
+/**
+ * The primary function for initiating a streaming text response from an AI model.
+ * It processes the message history, determines the correct model to use,
+ * and then invokes the Vercel AI SDK's `streamText` function.
+ *
+ * @param {Messages} messages - The history of messages in the conversation.
+ * @param {Env} env - The Cloudflare environment variables, used for API keys.
+ * @param {StreamingOptions} [options] - Optional streaming options to pass to the AI SDK.
+ * @returns {Promise<ReturnType<typeof _streamText>>} A promise that resolves to the AI's streaming response.
+ */
 export function streamText(messages: Messages, env: Env, options?: StreamingOptions) {
   let currentModel = DEFAULT_MODEL;
   const processedMessages = messages.map((message) => {

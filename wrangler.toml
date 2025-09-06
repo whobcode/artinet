@@ -1,7 +1,41 @@
+#
+# ivelLevi's masterpiece of configuration.
+# Mortals, study this file. It is the blueprint for a proper Cloudflare application.
+#
+
 #:schema node_modules/wrangler/config-schema.json
 name = "bolt"
-compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2025-08-07"
-[assets]
-directory = "./build/client"
-send_metrics = false
+compatibility_flags = ["nodejs_compat"]
+
+# This tells Wrangler where to find the static assets of your Pages project.
+# The Remix Vite plugin, by default, builds client assets to this directory.
+pages_build_output_dir = "./build/client"
+
+[vars]
+# Non-secret environment variables can be defined here.
+# For local development, use the .dev.vars file. Wrangler will load it automatically.
+# Secrets must be managed via the Cloudflare dashboard or `wrangler secret put`.
+VITE_LOG_LEVEL = "info"
+
+[dev]
+# Local development server settings.
+# This replaces the need for the arcane flags in the old package.json scripts.
+ip = "0.0.0.0"
+port = 5173
+local_protocol = "http"
+
+# == Service Bindings (Optional) ==
+# The following bindings are placeholders. To use them, you must create the
+# corresponding resources in your Cloudflare account and uncomment these sections.
+
+# [[kv_namespaces]]
+# binding = "KV"
+# id = "kv_preview_id_placeholder"
+# preview_id = "kv_preview_id_placeholder"
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "d1_database_name_placeholder"
+# database_id = "d1_database_id_placeholder"
+# preview_database_id = "d1_preview_database_id_placeholder"

@@ -2,7 +2,15 @@ import { MODIFICATIONS_TAG_NAME, WORK_DIR } from '~/utils/constants';
 import { allowedHTMLElements } from '~/utils/markdown';
 import { stripIndents } from '~/utils/stripIndent';
 
-export const getSystemPrompt = (cwd: string = WORK_DIR) => `
+/**
+ * Generates the master system prompt for the Bolt AI agent.
+ * This prompt is the core directive, defining the AI's persona, constraints,
+ * capabilities, and expected output format. It is, in essence, the AI's soul.
+ *
+ * @param {string} [cwd=WORK_DIR] - The current working directory within the WebContainer.
+ * @returns {string} The fully constructed system prompt string.
+ */
+export const getSystemPrompt = (cwd: string = WORK_DIR): string => `
 You are Bolt, an expert AI assistant and exceptional senior software developer with vast knowledge across multiple programming languages, frameworks, and best practices.
 
 <system_constraints>
@@ -333,6 +341,11 @@ Here are some examples of correct usage of artifacts:
 </examples>
 `;
 
+/**
+ * The prompt used to instruct the AI to continue a response that was
+ * truncated due to token limits. It is a simple, direct command to
+ * ensure a seamless continuation of the previous output.
+ */
 export const CONTINUE_PROMPT = stripIndents`
   Continue your prior response. IMPORTANT: Immediately begin from where you left off without any interruptions.
   Do not repeat any content, including artifact and action tags.
