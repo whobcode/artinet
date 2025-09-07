@@ -24,8 +24,8 @@ To begin your journey, you must first prepare your local environment.
     First, acquire the source code.
 
     ```bash
-    git clone https://github.com/coleam00/bolt.new-any-llm.git
-    cd bolt.new-any-llm
+    git clone https://github.com/whobcode/artinet.git
+    cd artinet
     ```
 
 2.  **Install Dependencies:**
